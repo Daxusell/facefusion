@@ -10,11 +10,13 @@ from facefusion.normalizer import normalize_output_path
 from facefusion.uis.core import get_ui_component
 from facefusion.filesystem import clear_temp, is_image, is_video
 
-OUTPUT_IMAGE : Optional[gradio.Image] = None
-OUTPUT_VIDEO : Optional[gradio.Video] = None
-OUTPUT_START_BUTTON : Optional[gradio.Button] = None
-OUTPUT_CLEAR_BUTTON : Optional[gradio.Button] = None
-OUTPUT_STOP_BUTTON : Optional[gradio.Button] = None
+OUTPUT_IMAGE: Optional[gradio.Image] = None
+OUTPUT_VIDEO: Optional[gradio.Video] = None
+OUTPUT_START_BUTTON: Optional[gradio.Button] = None
+OUTPUT_CLEAR_BUTTON: Optional[gradio.Button] = None
+OUTPUT_STOP_BUTTON: Optional[gradio.Button] = None
+OUTPUT_STATE_BUTTON: Optional[gradio.Button] = None
+OUTPUT_STATE_TEXTBOX: Optional[gradio.Textbox] = None
 
 
 def render() -> None:
@@ -23,44 +25,55 @@ def render() -> None:
 	global OUTPUT_START_BUTTON
 	global OUTPUT_STOP_BUTTON
 	global OUTPUT_CLEAR_BUTTON
+	global OUTPUT_STATE_BUTTON
+	global OUTPUT_STATE_TEXTBOX
 
 	OUTPUT_IMAGE = gradio.Image(
-		label = wording.get('uis.output_image_or_video'),
-		visible = False
+		label=wording.get('uis.output_image_or_video'),
+		visible=False
 	)
 	OUTPUT_VIDEO = gradio.Video(
-		label = wording.get('uis.output_image_or_video')
+		label=wording.get('uis.output_image_or_video')
 	)
 	OUTPUT_START_BUTTON = gradio.Button(
-		value = wording.get('uis.start_button'),
-		variant = 'primary',
-		size = 'sm'
+		value=wording.get('uis.start_button'),
+		variant='primary',
+		size='sm'
 	)
 	OUTPUT_STOP_BUTTON = gradio.Button(
-		value = wording.get('uis.stop_button'),
-		variant = 'primary',
-		size = 'sm',
-		visible = False
+		value=wording.get('uis.stop_button'),
+		variant='primary',
+		size='sm',
+		visible=False
 	)
 	OUTPUT_CLEAR_BUTTON = gradio.Button(
-		value = wording.get('uis.clear_button'),
-		size = 'sm'
+		value=wording.get('uis.clear_button'),
+		size='sm'
 	)
+	OUTPUT_STATE_BUTTON = gradio.Button(
+		value=wording.get('uis.state_button'),
+		size='sm'
+	)
+
+	OUTPUT_STATE_TEXTBOX = gradio.Textbox(
+		label=wording.get('uis.output_state_textbox'))
 
 
 def listen() -> None:
 	output_path_textbox = get_ui_component('output_path_textbox')
 	if output_path_textbox:
-		OUTPUT_START_BUTTON.click(start, outputs = [ OUTPUT_START_BUTTON, OUTPUT_STOP_BUTTON ])
-		OUTPUT_START_BUTTON.click(process, outputs = [ OUTPUT_IMAGE, OUTPUT_VIDEO, OUTPUT_START_BUTTON, OUTPUT_STOP_BUTTON ])
-	OUTPUT_STOP_BUTTON.click(stop, outputs = [ OUTPUT_START_BUTTON, OUTPUT_STOP_BUTTON ])
-	OUTPUT_CLEAR_BUTTON.click(clear, outputs = [ OUTPUT_IMAGE, OUTPUT_VIDEO ])
+		OUTPUT_START_BUTTON.click(start, outputs=[OUTPUT_START_BUTTON, OUTPUT_STOP_BUTTON])
+		OUTPUT_START_BUTTON.click(process,
+								  outputs=[OUTPUT_IMAGE, OUTPUT_VIDEO, OUTPUT_START_BUTTON, OUTPUT_STOP_BUTTON])
+	OUTPUT_STOP_BUTTON.click(stop, outputs=[OUTPUT_START_BUTTON, OUTPUT_STOP_BUTTON])
+	OUTPUT_CLEAR_BUTTON.click(clear, outputs=[OUTPUT_IMAGE, OUTPUT_VIDEO])
+	OUTPUT_STATE_BUTTON.click(state, outputs=[OUTPUT_STATE_TEXTBOX])
 
 
 def start() -> Tuple[gradio.Button, gradio.Button]:
 	while not process_manager.is_processing():
 		sleep(0.5)
-	return gradio.Button(visible = False), gradio.Button(visible = True)
+	return gradio.Button(visible=False), gradio.Button(visible=True)
 
 
 def process() -> Tuple[gradio.Image, gradio.Video, gradio.Button, gradio.Button]:
@@ -69,15 +82,19 @@ def process() -> Tuple[gradio.Image, gradio.Video, gradio.Button, gradio.Button]
 		limit_system_memory(facefusion.globals.system_memory_limit)
 	conditional_process()
 	if is_image(normed_output_path):
-		return gradio.Image(value = normed_output_path, visible = True), gradio.Video(value = None, visible = False), gradio.Button(visible = True), gradio.Button(visible = False)
+		return gradio.Image(value=normed_output_path, visible=True), gradio.Video(value=None,
+																				  visible=False), gradio.Button(
+			visible=True), gradio.Button(visible=False)
 	if is_video(normed_output_path):
-		return gradio.Image(value = None, visible = False), gradio.Video(value = normed_output_path, visible = True), gradio.Button(visible = True), gradio.Button(visible = False)
-	return gradio.Image(value = None), gradio.Video(value = None), gradio.Button(visible = True), gradio.Button(visible = False)
+		return gradio.Image(value=None, visible=False), gradio.Video(value=normed_output_path,
+																	 visible=True), gradio.Button(
+			visible=True), gradio.Button(visible=False)
+	return gradio.Image(value=None), gradio.Video(value=None), gradio.Button(visible=True), gradio.Button(visible=False)
 
 
 def stop() -> Tuple[gradio.Button, gradio.Button]:
 	process_manager.stop()
-	return gradio.Button(visible = True), gradio.Button(visible = False)
+	return gradio.Button(visible=True), gradio.Button(visible=False)
 
 
 def clear() -> Tuple[gradio.Image, gradio.Video]:
@@ -85,4 +102,10 @@ def clear() -> Tuple[gradio.Image, gradio.Video]:
 		sleep(0.5)
 	if facefusion.globals.target_path:
 		clear_temp(facefusion.globals.target_path)
-	return gradio.Image(value = None), gradio.Video(value = None)
+	return gradio.Image(value=None), gradio.Video(value=None)
+
+
+def state() -> Tuple[gradio.Textbox]:
+	states = process_manager.get_process_state()
+	return gradio.Textbox(value=states)
+

@@ -118,6 +118,7 @@ WORDING : Dict[str, Any] =\
 		'start_button': 'START',
 		'stop_button': 'STOP',
 		'clear_button': 'CLEAR',
+		'state_button': 'STATE',
 		# about
 		'donate_button': 'DONATE',
 		# benchmark
@@ -177,6 +178,7 @@ WORDING : Dict[str, Any] =\
 		'output_video_quality_slider': 'OUTPUT VIDEO QUALITY',
 		'output_video_resolution_dropdown': 'OUTPUT VIDEO RESOLUTION',
 		'output_video_fps_slider': 'OUTPUT VIDEO FPS',
+		'output_state_textbox': 'RUNNING STATE',
 		# preview
 		'preview_image': 'PREVIEW',
 		'preview_frame_slider': 'PREVIEW FRAME',
