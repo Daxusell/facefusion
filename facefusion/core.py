@@ -235,6 +235,7 @@ def conditional_process() -> None:
 		process_image(start_time)
 	if is_video(facefusion.globals.target_path):
 		process_video(start_time)
+	process_manager.set_process_state("pending")
 
 
 def conditional_append_reference_faces() -> None:
